@@ -1,26 +1,28 @@
+import os
 import re
 import argparse
 from datetime import datetime
-import os
 
-def complexity(argalpha=False,argul=False,argnum=False,argspec=False,argmin=6,argmax=256):
+
+def complexity(argalpha=False, argul=False, argnum=False, argspec=False, argmin=6, argmax=256):
     alpha = ''
     num = ''
     spec = ''
+    
     if argalpha or argul: # Building alphabet requirements
         if argul: # If Upper AND Lower are required
             alpha = r'(?=.*[a-z])(?=.*[A-Z])'
         else: # If Upper OR Lower are required
-            alpha = r'(?=.*[a-zA-Z])'
+            alpha = r'(?=.*[a-zA-Z])' 
     if argnum: #If numbers are required
         num = r'(?=.*[0-9])'
     if argspec: # If special characters are required
         spec = r'(?=.*[^a-zA-Z0-9_])'
-    regex = alpha + num + spec + '.{' + str(argmin) + ',' + str(argmax) + '}'
+    regex = f"{alpha}{num}{spec}.{{{argmin},{argmax}}}"
     return re.compile(regex)
 
 
-def process(wordlists,requirements,output):
+def process(wordlists, requirements, output):
     lread = 0 # Total lines Read
     lwrite = 0 # Total lines wrote
 
@@ -28,8 +30,9 @@ def process(wordlists,requirements,output):
         # Open the output file for writing
         with open(output, "w", encoding="utf-8") as file_out:
             #Process each list
-            for list in wordlists:
-                with open(list, "r", encoding="utf-8", errors="replace") as file_in:
+            for wordlist in wordlists:
+                print(f"Processing {wordlist}")
+                with open(wordlist, "r", encoding="utf-8", errors="replace") as file_in:
                     for line in file_in:
                         lread += 1
                         if requirements.match(line.strip()):  # If line matches the password requirements
@@ -52,11 +55,14 @@ def results(lread,lwrite,out,start):
     minutes, seconds = divmod(remainder, 60)
 
     print(f"Processing completed at {end.hour}:{end.minute}:{end.second} ")
-    print(f"Total # of lines processed: {lread}.")
-    print(f"Total # of lines matching requirements: {lwrite}")
     print(f"New wordlist {out} created.")
+    print(f"Total # of lines processed: {lread}.")
+    # If no matching lines, report
+    if lwrite <= 0:
+        print("No lines matched requirements. Please verify your settings and run again.")
+    else:
+        print(f"Total # of lines matching requirements: {lwrite}")
     print(f"Total runtime: {int(hours)} hours, {int(minutes)} minutes, {seconds:.2f} seconds")
-
 
 
 def main():
@@ -93,7 +99,9 @@ def main():
     # Processes input wordlist and creates output
     lread, lwrite = process(args.wordlist, pattern, args.output)
 
-    results(lread,lwrite,args.output,starttime) # Prints results to the screen
+    # Prints results to the screen
+    results(lread, lwrite, args.output, starttime) 
+
 
 if __name__ == "__main__":
     main()
